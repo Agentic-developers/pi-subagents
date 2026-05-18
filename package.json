@@ -1,0 +1,21 @@
+{
+  "name": "pi-subagents",
+  "version": "0.1.0",
+  "description": "Pi subagent dispatch extension — general-purpose and scout subagents with depth-2 isolation. Synced from Agentic-developers/adw.",
+  "keywords": ["pi-package", "pi", "subagent"],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/subagents.mjs",
+  "files": ["dist/", "agents/", "README.md", "LICENSE"],
+  "pi": {
+    "extensions": ["./dist/subagents.mjs"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Agentic-developers/adw.git",
+    "directory": "packages/pi_extensions"
+  }
+}
