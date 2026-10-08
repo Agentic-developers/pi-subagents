@@ -2,8 +2,8 @@
 
 A minimal pi extension that adds a single `subagent` tool for delegating work to isolated child pi processes, plus two bundled subagent prompts:
 
-- **scout** — fast read-only codebase recon (locked to `gpt-5.4-mini`)
-- **general-purpose** — deep coding work, multi-file refactors, architecture questions (default `gpt-5.5:high`, overridable per call)
+- **scout** — fast read-only codebase recon (locked to `gpt-6-luna`)
+- **general-purpose** — deep coding work, multi-file refactors, architecture questions (default `gpt-6.1-sol:high`, overridable per call)
 
 Recursion is capped at depth 2 — anything a subagent spawns is leaf-only.
 
@@ -29,13 +29,13 @@ Once installed, the `subagent` tool is available to your pi agent. From inside p
 
 > "Use the scout subagent to find where session resumption is handled."
 
-> "Spawn a general-purpose subagent at `gpt-5.4-mini:high` to refactor the auth middleware."
+> "Spawn a general-purpose subagent at `gpt-6-luna:high` to refactor the auth middleware."
 
 The tool accepts:
 
 - `agent` (required) — `scout` or `general-purpose`
 - `task` (required) — task description for the subagent
-- `model` (optional) — override the agent's pinned model (e.g. `gpt-5.4`, `gpt-5.5:high`)
+- `model` (optional) — override the agent's pinned model (e.g. `gpt-6-sol`, `gpt-6.1-sol:high`)
 - `thinking` (optional) — override reasoning effort (`off` | `minimal` | `low` | `medium` | `high` | `xhigh`)
 
 ## Environment
@@ -43,7 +43,7 @@ The tool accepts:
 | Variable | Default | Purpose |
 |---|---|---|
 | `ADW_PI_AGENTS_DIR` | `<package>/agents` | Where to load subagent `.md` files from. The default resolves to this package's bundled `agents/` directory. |
-| `ADW_PI_DEFAULT_SUBAGENT_MODEL` | `gpt-5.4-mini` | Fallback model when neither the call nor the agent frontmatter specifies one. |
+| `ADW_PI_DEFAULT_SUBAGENT_MODEL` | `gpt-6-luna` | Fallback model when neither the call nor the agent frontmatter specifies one. |
 | `ADW_PI_PROVIDER` | `openai` | Provider passed to the child pi process. |
 | `ADW_PI_BIN` | `pi` | Path to the pi binary (override if not on PATH). |
 

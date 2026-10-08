@@ -25,7 +25,7 @@ function parseAgentFrontmatter(agentMd) {
   return { model: modelMatch ? modelMatch[1].trim() : void 0, body };
 }
 function resolveModel(opts) {
-  return opts.override ?? opts.frontmatter ?? opts.envDefault ?? "gpt-5.4-mini";
+  return opts.override ?? opts.frontmatter ?? opts.envDefault ?? "gpt-6-luna";
 }
 function resolveProvider(env = process.env) {
   return env.ADW_PI_PROVIDER ?? "openai";
@@ -181,7 +181,7 @@ function registerSubagentTool(pi) {
         task: { type: "string", description: "The task description." },
         model: {
           type: "string",
-          description: "Override the model for this call (e.g. 'gpt-5.5' or 'gpt-5.5:high'). Omit to use the agent file's model pin."
+          description: "Override the model for this call (e.g. 'gpt-6.1-sol' or 'gpt-6.1-sol:high'). Omit to use the agent file's model pin."
         },
         thinking: {
           type: "string",

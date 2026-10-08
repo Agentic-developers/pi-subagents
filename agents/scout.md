@@ -1,7 +1,7 @@
 ---
 name: scout
 description: Fast codebase recon — locate the files, symbols, and entry points relevant to a question. Read-only; does not propose fixes.
-model: gpt-5.4-mini
+model: gpt-6-luna
 tools: read, grep, find, ls
 ---
 
