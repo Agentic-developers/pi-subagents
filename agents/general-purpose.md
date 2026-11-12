@@ -33,10 +33,10 @@ You can spawn one level of subagent (depth cap: 2 from the parent, so anything y
 
 - For pure read-only recon, prefer `scout` — narrower tools and a tight 300-word contract.
 - For coding sub-tasks, spawn another `general-purpose` and pick model + thinking deliberately:
-  - `gpt-5.4-mini` at `low`/`medium` thinking — cheap, parallel-friendly, fine for narrow well-scoped tasks. Use this first.
-  - `gpt-5.4-mini:high` or `gpt-5.4` at `medium` — when reasoning matters. Bump thinking on the cheaper model before jumping tiers.
-  - `gpt-5.5:high` — reserve for genuinely hard sub-problems (deep synthesis, multi-file reasoning under uncertainty); not a default.
-- Pass `model` and `thinking` via the subagent tool call (e.g. `model: "gpt-5.4-mini"` + `thinking: "high"`, or shorthand `model: "gpt-5.5:high"`).
+  - `gpt-6-luna` at `low`/`medium` thinking — cheap, parallel-friendly, fine for narrow well-scoped tasks. Use this first.
+  - `gpt-6-luna:high` or `gpt-6.1-sol` at `medium` — when reasoning matters. Bump thinking on the cheaper model before jumping tiers.
+  - `gpt-6.1-sol:high` — reserve for genuinely hard sub-problems (deep synthesis, multi-file reasoning under uncertainty); not a default.
+- Pass `model` and `thinking` via the subagent tool call (e.g. `model: "gpt-6-luna"` + `thinking: "high"`, or shorthand `model: "gpt-6.1-sol:high"`).
 
 ## Output
 
