@@ -27,6 +27,37 @@ function parseAgentFrontmatter(agentMd) {
 function resolveModel(opts) {
   return opts.override ?? opts.frontmatter ?? opts.envDefault ?? "gpt-6-luna";
 }
+function parseAgentModelPins(raw) {
+  const pins = /* @__PURE__ */ new Map();
+  for (const entry of (raw ?? "").split(",")) {
+    const eq = entry.indexOf("=");
+    if (eq < 0) continue;
+    const name = entry.slice(0, eq).trim();
+    const model = entry.slice(eq + 1).trim();
+    if (name && model) pins.set(name, model);
+  }
+  return pins;
+}
+function splitThinking(model) {
+  const idx = model.lastIndexOf(":");
+  if (idx > 0) {
+    const suffix = model.slice(idx + 1);
+    if (THINKING_LEVELS.includes(suffix)) {
+      return { id: model.slice(0, idx), thinking: suffix };
+    }
+  }
+  return { id: model, thinking: null };
+}
+function emptyUsage() {
+  return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0 };
+}
+function failure(agent, depth, text) {
+  return {
+    content: [{ type: "text", text }],
+    details: { usage: null, depth, agent, model: null, thinking: null, calls: [] },
+    isError: true
+  };
+}
 function resolveProvider(env = process.env) {
   return env.ADW_PI_PROVIDER ?? "openai";
 }
@@ -55,28 +86,20 @@ async function spawnChildPi(opts) {
   try {
     agentMd = await readFile(agentPath, "utf-8");
   } catch (_err) {
-    return {
-      content: [
-        { type: "text", text: `ERROR: subagent definition not found at ${agentPath}` }
-      ],
-      details: { usage: null, depth },
-      isError: true
-    };
+    return failure(agent, depth, `ERROR: subagent definition not found at ${agentPath}`);
   }
   const parsed = parseAgentFrontmatter(agentMd);
   if (!parsed) {
-    return {
-      content: [{ type: "text", text: `ERROR: subagent ${agent} has no frontmatter` }],
-      details: { usage: null, depth },
-      isError: true
-    };
+    return failure(agent, depth, `ERROR: subagent ${agent} has no frontmatter`);
   }
   const { model: frontmatterModel, body } = parsed;
+  const pinned = parseAgentModelPins(process.env.ADW_PI_SUBAGENT_MODELS).get(agent);
   const model = resolveModel({
-    override: modelOverride,
+    override: pinned ?? modelOverride,
     frontmatter: frontmatterModel,
     envDefault: process.env.ADW_PI_DEFAULT_SUBAGENT_MODEL
   });
+  const thinking = pinned ? void 0 : thinkingOverride;
   const tmpDir = await mkdtemp(join(tmpdir(), "adw-pi-sub-"));
   const promptFile = join(tmpDir, "system-prompt.md");
   await writeFile(promptFile, body, "utf-8");
@@ -84,7 +107,7 @@ async function spawnChildPi(opts) {
   const args = buildPiArgs({
     provider: resolveProvider(),
     model,
-    thinking: thinkingOverride,
+    thinking,
     promptFile,
     task
   });
@@ -107,13 +130,18 @@ async function spawnChildPi(opts) {
     }
   };
   signal.addEventListener("abort", onAbort);
+  const started = Date.now();
   let lastText = "";
-  const totalUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0 };
+  const totalUsage = emptyUsage();
+  let responseModel = null;
+  let turns = 0;
+  const nestedCalls = [];
   let stderr = "";
   proc.stderr?.on("data", (chunk) => {
     stderr += chunk.toString("utf-8");
   });
   let buf = "";
+  let error = null;
   try {
     await new Promise((resolve, reject) => {
       proc.stdout?.on("data", (chunk) => {
@@ -126,7 +154,15 @@ async function spawnChildPi(opts) {
           if (!line) continue;
           try {
             const ev = JSON.parse(line);
-            if (ev.type === "message_end" && ev.message?.role === "assistant") {
+            if (ev.type === "turn_end") {
+              turns += 1;
+            } else if (ev.type === "tool_execution_end" && ev.toolName === "subagent") {
+              const calls = ev.result?.details?.calls;
+              if (Array.isArray(calls)) nestedCalls.push(...calls);
+            } else if (ev.type === "message_end" && ev.message?.role === "assistant") {
+              if (typeof ev.message.model === "string" && ev.message.model) {
+                responseModel = ev.message.model;
+              }
               const u = ev.message.usage ?? {};
               totalUsage.input += u.input ?? 0;
               totalUsage.output += u.output ?? 0;
@@ -153,15 +189,38 @@ async function spawnChildPi(opts) {
       proc.on("error", reject);
     });
   } catch (err) {
+    error = err;
+  }
+  const requested = splitThinking(model);
+  const effectiveThinking = thinking ?? requested.thinking;
+  const self = {
+    agent,
+    model: responseModel ?? requested.id,
+    thinking: effectiveThinking,
+    depth,
+    usage: totalUsage,
+    turns,
+    durationMs: Date.now() - started,
+    isError: error !== null
+  };
+  const details = {
+    usage: totalUsage,
+    depth,
+    agent,
+    model: self.model,
+    thinking: effectiveThinking,
+    calls: [self, ...nestedCalls]
+  };
+  if (error !== null) {
     return {
-      content: [{ type: "text", text: `ERROR: subagent failed: ${err.message}` }],
-      details: { usage: totalUsage, depth },
+      content: [{ type: "text", text: `ERROR: subagent failed: ${error.message}` }],
+      details,
       isError: true
     };
   }
   return {
     content: [{ type: "text", text: lastText || "(subagent returned no text)" }],
-    details: { usage: totalUsage, depth }
+    details
   };
 }
 

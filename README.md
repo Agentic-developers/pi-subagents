@@ -44,6 +44,7 @@ The tool accepts:
 |---|---|---|
 | `ADW_PI_AGENTS_DIR` | `<package>/agents` | Where to load subagent `.md` files from. The default resolves to this package's bundled `agents/` directory. |
 | `ADW_PI_DEFAULT_SUBAGENT_MODEL` | `gpt-6-luna` | Fallback model when neither the call nor the agent frontmatter specifies one. |
+| `ADW_PI_SUBAGENT_MODELS` | (empty) | Per-agent pins, `name=model[:thinking]` comma separated. A pin beats the frontmatter and the call's `model` and `thinking`. |
 | `ADW_PI_PROVIDER` | `openai` | Provider passed to the child pi process. |
 | `ADW_PI_BIN` | `pi` | Path to the pi binary (override if not on PATH). |
 
